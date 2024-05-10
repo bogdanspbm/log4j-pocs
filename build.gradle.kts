@@ -17,6 +17,9 @@ dependencies {
     // For JSON Config POC
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
 
+    // For YAML Config POC
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
+
     // For Rolling Pocs
     testImplementation("org.mockito:mockito-core:5.11.0")
 
