@@ -134,6 +134,16 @@ This projects is a poc list for *log4j* java library, which extends default poc 
     }
 ```
 
+**AbstractAction.execute()**
+
+In the inheritance tree, AbstractAction is related to AbstractPathAction. Primarily, AbstractPathAction introduces a new field:
+
+```
+private final StrSubstitutor subst;
+```
+
+This field is utilized within the execute method of AbstractPathAction, which triggers the entire call stack associated with StrSubstitutor.replace -> StrSubstitutor.resolveVariable -> StrSubstitutor.lookup. Unlike AbstractAction, which lacks the StrSubstitutor attribute and contains an empty execute method (since it's an abstract interface), AbstractAction does not have any proof of concept for reproducing the same issue.
+
 ## Pocs for Config Tree ##
 
 **JSONConfigurationFactory.getConfiguration()**
