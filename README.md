@@ -61,6 +61,19 @@ nc -l -p 7777
     }
 ```
 
+**ClassLoaderContextSelector.getContext()**
+
+```
+@Test
+    public void getContextClassLoaderContextSelectorTest(){
+        ClassLoaderContextSelector contextSelector = new ClassLoaderContextSelector();
+        URI configUri = new File("config.json").toURI();
+        LoggerContext context = contextSelector.getContext( ClassLoaderContextSelector.class.getName() ,null, false, configUri );
+        context.setConfigLocation(null);
+        contextSelector.getContext( ClassLoaderContextSelector.class.getName() ,null, false, configUri );
+    }
+```
+
 ## Pocs for Pattern Converters ##
 
 **MessagePatternConverter.format()**
