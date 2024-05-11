@@ -14,6 +14,11 @@ This projects is a poc list for *log4j* java library, which extends default poc 
 }
 ```
 
+**run ldpa server**
+```
+nc -l -p 7777
+```
+
 ## Pocs for FileManager Tree
 
 **RollingFileManager.build()**
