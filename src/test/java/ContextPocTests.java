@@ -26,7 +26,9 @@ public class ContextPocTests {
         contextSelector.getContext( ClassLoaderContextSelector.class.getName() ,null, false, configUri );
     }
 
+
     @Test
+    // Здесь не очень понятно как подать Bundle пока что, но если подать любой Bundle то сработает POC
     public void getContextBundleContextSelectorTest(){
        BundleContextSelector contextSelector = new BundleContextSelector();
        URI configUri = new File("config.json").toURI();
