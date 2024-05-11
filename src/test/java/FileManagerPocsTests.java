@@ -14,7 +14,7 @@ import java.io.File;
 public class FileManagerPocsTests {
 
     @Test
-    public void test(){
+    public void buildRollingFileManager(){
         PatternLayout layout = PatternLayout.newBuilder()
                 .withConfiguration(new DefaultConfiguration())
                 .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")

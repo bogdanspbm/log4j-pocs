@@ -11,12 +11,7 @@ public class CustomDeleteAction {
     DeleteAction action;
 
     public CustomDeleteAction(String basePath) {
-        action = DeleteAction.createDeleteAction(basePath, false, 1, true, new PathSorter() {
-            @Override
-            public int compare(PathWithAttributes o1, PathWithAttributes o2) {
-                return o1.toString().compareTo(o2.toString());
-            }
-        }, new PathCondition[]{
+        action = DeleteAction.createDeleteAction(basePath, false, 1, true, null , new PathCondition[]{
                 IfFileName.createNameCondition(String.format("%s-*.log.zip", "appname"), null, IfAccumulatedFileCount.createFileCountCondition(1))
         }, null, new DefaultConfiguration());
     }
