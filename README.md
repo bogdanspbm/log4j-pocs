@@ -459,6 +459,20 @@ implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1"
     }
 ```
 
+**PatternLayout.build()**
+
+All methods are linked to parent nodes through DefaultConfig<Init>. Since this function only generates DefaultConfig, it does not lead to any form of injection.
+
+```
+ public PatternLayout build() {
+            if (this.configuration == null) {
+                this.configuration = new DefaultConfiguration();
+            }
+
+            return new PatternLayout(this.configuration, this.regexReplacement, this.pattern, this.patternSelector, this.charset, this.alwaysWriteExceptions, this.disableAnsi, this.noConsoleNoAnsi, this.header, this.footer);
+        }
+```
+
 #### Pocs for Rewriter Tree ####
 
 **PropertiesRewritePolicy.rewrite()**
