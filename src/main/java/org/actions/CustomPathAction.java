@@ -20,11 +20,6 @@ public class CustomPathAction extends AbstractPathAction {
         super(basePath, false, 1, new PathCondition[]{}, new DefaultConfiguration().getStrSubstitutor());
     }
 
-    @Override
-    public boolean execute() throws IOException {
-        System.out.println("Executing action on base path: " + getBasePath());
-        return true;
-    }
 
     @Override
     protected FileVisitor<Path> createFileVisitor(Path visitorBaseDir, List<PathCondition> conditions) {
