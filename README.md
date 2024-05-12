@@ -235,6 +235,34 @@ ANY_Manager.updateData()
     }
 ```
 
+**LogManager.getLogger()**
+
+The methods getLogger, getFormatterLogger, and similar ones utilize LogManager.getContext() with null for ConfigURI. Concurrently, there exists a branch within LogManager.getContext() that involves specifying a ConfigURI to enable configuration injection. In such instances, the configuration is loaded from a file, potentially leading to JNDI injections. However, the use of the aforementioned methods does not lead to JNDI injection because they employ the default configuration rather than a specialized one in their call stack.
+
+LogManager.getContext() used in the first PoC
+```
+  public static LoggerContext getContext(final ClassLoader loader, final boolean currentContext, final URI configLocation) {
+        try {
+            return factory.getContext(FQCN, loader, (Object)null, currentContext, configLocation, (String)null);
+        } catch (IllegalStateException var4) {
+            LOGGER.warn(var4.getMessage() + " Using SimpleLogger");
+            return (new SimpleLoggerContextFactory()).getContext(FQCN, loader, (Object)null, currentContext, configLocation, (String)null);
+        }
+    }
+```
+
+LogManager.getContext() used in getLogger and getFormatterLogger
+```
+public static LoggerContext getContext(final boolean currentContext) {
+        try {
+            return factory.getContext(FQCN, (ClassLoader)null, (Object)null, currentContext, (URI)null, (String)null);
+        } catch (IllegalStateException var2) {
+            LOGGER.warn(var2.getMessage() + " Using SimpleLogger");
+            return (new SimpleLoggerContextFactory()).getContext(FQCN, (ClassLoader)null, (Object)null, currentContext, (URI)null, (String)null);
+        }
+    }
+```
+
 ## Pocs for Pattern Converters ##
 
 **MessagePatternConverter.format()**
