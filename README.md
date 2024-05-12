@@ -177,7 +177,7 @@ This field is utilized within the execute method of AbstractPathAction, which tr
     }
 ```
 
-**JSONConfigurationFactory.reconfigure()**
+**JSONConfiguration.reconfigure()**
 
 ```
    @Test
