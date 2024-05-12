@@ -187,7 +187,7 @@ nc -l -p 7777
     }
 ```
 
-**<ANY>Manager.getManager()**
+**ANY_Manager.getManager()**
 
 Since the RollingFileManager utilizes a lookup call in access which invokes updateDate()->setTriggeringPolicy(), it is necessary to include setTriggeringPolicy within updateData(). This implementation is specific to RollingFileManager. Other managers that extend AbstractManager typically have an empty updateData method. Therefore, their getManager() calls do not execute setTriggeringPolicy and do not impact JNDI execution.
 
@@ -202,7 +202,7 @@ RollingFileManager.updateData()
     }
 ```
 
-<ANY>Manager.updateData()
+ANY_Manager.updateData()
 
 ```
  public void updateData(final Object data) {
