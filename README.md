@@ -104,11 +104,11 @@ nc -l -p 7777
     }
 ```
 
-**OnStartupTriggeringPolicy.setTriggerPolicy()**
+**RollingFileManager.setTriggerPolicy()**
 
 ```
  @Test
-    public void setTriggerPolicyOnStartupTriggeringPolicyTest(){
+    public void setTriggerPolicyRollingFileManagerTest(){
         PatternLayout layout = PatternLayout.newBuilder()
                 .withConfiguration(new DefaultConfiguration())
                 .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
