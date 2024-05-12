@@ -210,6 +210,87 @@ ANY_Manager.updateData()
     }
 ```
 
+## Pocs for Lifecycle Tree ##
+
+The lifecycle tree operates through the LifeCycle.start() method. Initially, AbstractConfiguration, which implements LifeCycle, initiates this extensive sequence of calls. However, this proof of concept (PoC) primarily relies on the setConfiguration method, unique to the AbstractConfiguration class. Other classes like SmtpAppender, RoutingAppender, AppenderSet, and even the Configuration Scheduler do not implement setConfiguration within their start method, and therefore, they do not trigger JNDI injection.
+
+**AbstractConfiguration.start()**
+```
+ @Override
+    public void start() {
+        // Preserve the prior behavior of initializing during start if not initialized.
+        if (getState().equals(State.INITIALIZING)) {
+            initialize();
+        }
+        LOGGER.debug("Starting configuration {}", this);
+        this.setStarting();
+        if (watchManager.getIntervalSeconds() >= 0) {
+            watchManager.start();
+        }
+        if (hasAsyncLoggers()) {
+            asyncLoggerConfigDisruptor.start();
+        }
+        final Set<LoggerConfig> alreadyStarted = new HashSet<>();
+        for (final LoggerConfig logger : loggerConfigs.values()) {
+            logger.start();
+            alreadyStarted.add(logger);
+        }
+        for (final Appender appender : appenders.values()) {
+            appender.start();
+        }
+        if (!alreadyStarted.contains(root)) { // LOG4J2-392
+            root.start(); // LOG4J2-336
+        }
+        super.start();
+        LOGGER.debug("Started configuration {} OK.", this);
+    }
+```
+
+
+**AbstractConfiguration.initialize()**
+```
+ @Override
+    public void initialize() {
+        LOGGER.debug(Version.getProductString() + " initializing configuration {}", this);
+        subst.setConfiguration(this);
+        try {
+            scriptManager = new ScriptManager(this, watchManager);
+        } catch (final LinkageError | Exception e) {
+            // LOG4J2-1920 ScriptEngineManager is not available in Android
+            LOGGER.info("Cannot initialize scripting support because this JRE does not support it.", e);
+        }
+        pluginManager.collectPlugins(pluginPackages);
+        final PluginManager levelPlugins = new PluginManager(Level.CATEGORY);
+        levelPlugins.collectPlugins(pluginPackages);
+        final Map<String, PluginType<?>> plugins = levelPlugins.getPlugins();
+        if (plugins != null) {
+            for (final PluginType<?> type : plugins.values()) {
+                try {
+                    // Cause the class to be initialized if it isn't already.
+                    Loader.initializeClass(type.getPluginClass().getName(), type.getPluginClass().getClassLoader());
+                } catch (final Exception e) {
+                    LOGGER.error("Unable to initialize {} due to {}", type.getPluginClass().getName(), e.getClass()
+                            .getSimpleName(), e);
+                }
+            }
+        }
+        setup();
+        setupAdvertisement();
+        doConfigure();
+        setState(State.INITIALIZED);
+        LOGGER.debug("Configuration {} initialized", this);
+    }
+```
+
+**OTHER_LifeCycle.start()**
+```
+  @Override
+    public void start() {
+        this.setStarted();
+    }
+```
+
+
 ## Pocs for Context Tree ##
 
 **LogManager.getContext()**
