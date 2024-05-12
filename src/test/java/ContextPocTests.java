@@ -1,8 +1,10 @@
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.DefaultConfiguration;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.osgi.BundleContextSelector;
 import org.apache.logging.log4j.core.selector.ClassLoaderContextSelector;
+import org.apache.logging.log4j.core.selector.NamedContextSelector;
 import org.junit.jupiter.api.Test;
 
 import javax.naming.Context;
