@@ -691,6 +691,270 @@ All methods are linked to parent nodes through DefaultConfig<Init>. Since this f
     }
 ```
 
+**Builder.build()**
+
+`Builder.build()` is an interface with its own implementation of the build method. `PluginBuilder` implements this interface and overrides the build method. However, `Builder.build()` does not contain any calls to `generateParameters`, so this branch does not implement JNDI.
+
+Builder.build()
+
+```
+public interface Builder<T> {
+
+    /**
+     * Builds the object after all configuration has been set. This will use default values for any
+     * unspecified attributes for the object.
+     *
+     * @return the configured instance.
+     * @throws org.apache.logging.log4j.core.config.ConfigurationException if there was an error building the
+     * object.
+     */
+    T build();
+}
+```
+
+PluginBuilder.build()
+
+```
+ @Override
+    public Object build() {
+        verify();
+        // first try to use a builder class if one is available
+        try {
+            LOGGER.debug("Building Plugin[name={}, class={}].", pluginType.getElementName(),
+                    pluginType.getPluginClass().getName());
+            final Builder<?> builder = createBuilder(this.clazz);
+            if (builder != null) {
+                injectFields(builder);
+                return builder.build();
+            }
+        } catch (final ConfigurationException e) { // LOG4J2-1908
+            LOGGER.error("Could not create plugin of type {} for element {}", this.clazz, node.getName(), e);
+            return null; // no point in trying the factory method
+        } catch (final Exception e) {
+            LOGGER.error("Could not create plugin of type {} for element {}: {}",
+                    this.clazz, node.getName(),
+                    (e instanceof InvocationTargetException ? ((InvocationTargetException) e).getCause() : e).toString(), e);
+        }
+        // or fall back to factory method if no builder class is available
+        try {
+            final Method factory = findFactoryMethod(this.clazz);
+            final Object[] params = generateParameters(factory);
+            return factory.invoke(null, params);
+        } catch (final Exception e) {
+            LOGGER.error("Unable to invoke factory method in {} for element {}: {}",
+                    this.clazz, this.node.getName(),
+                    (e instanceof InvocationTargetException ? ((InvocationTargetException) e).getCause() : e).toString(), e);
+            return null;
+        }
+    }
+```
+
+**AbstractFitlerable.start()**
+
+`AbstractFilterable` is an interface with its own `start()` implementation. `AbstractConfiguration` implements `AbstractFilterable` and overrides the `start()` method. After several calls, `AbstractConfiguration` triggers a `createPlugin` call. However, `AbstractFilterable` does not invoke this, so it does not implement JNDI.
+
+AbstractFilterable.start()
+
+```
+ public void start() {
+        this.setStarting();
+        if (filter != null) {
+            filter.start();
+        }
+        this.setStarted();
+    }
+```
+
+! For AbstractConfiguration there are 5 calls: start()->initialize()->doConfigure()->createConfiguration()->createPlugin()
+
+AbstractConfiguration.start()
+
+```
+ @Override
+    public void start() {
+        // Preserve the prior behavior of initializing during start if not initialized.
+        if (getState().equals(State.INITIALIZING)) {
+            initialize();
+        }
+        LOGGER.debug("Starting configuration {}", this);
+        this.setStarting();
+        if (watchManager.getIntervalSeconds() >= 0) {
+            watchManager.start();
+        }
+        if (hasAsyncLoggers()) {
+            asyncLoggerConfigDisruptor.start();
+        }
+        final Set<LoggerConfig> alreadyStarted = new HashSet<>();
+        for (final LoggerConfig logger : loggerConfigs.values()) {
+            logger.start();
+            alreadyStarted.add(logger);
+        }
+        for (final Appender appender : appenders.values()) {
+            appender.start();
+        }
+        if (!alreadyStarted.contains(root)) { // LOG4J2-392
+            root.start(); // LOG4J2-336
+        }
+        super.start();
+        LOGGER.debug("Started configuration {} OK.", this);
+    }
+```
+
+AbstractConfiguration.initialize()
+
+```
+    @Override
+    public void initialize() {
+        LOGGER.debug(Version.getProductString() + " initializing configuration {}", this);
+        subst.setConfiguration(this);
+        try {
+            scriptManager = new ScriptManager(this, watchManager);
+        } catch (final LinkageError | Exception e) {
+            // LOG4J2-1920 ScriptEngineManager is not available in Android
+            LOGGER.info("Cannot initialize scripting support because this JRE does not support it.", e);
+        }
+        pluginManager.collectPlugins(pluginPackages);
+        final PluginManager levelPlugins = new PluginManager(Level.CATEGORY);
+        levelPlugins.collectPlugins(pluginPackages);
+        final Map<String, PluginType<?>> plugins = levelPlugins.getPlugins();
+        if (plugins != null) {
+            for (final PluginType<?> type : plugins.values()) {
+                try {
+                    // Cause the class to be initialized if it isn't already.
+                    Loader.initializeClass(type.getPluginClass().getName(), type.getPluginClass().getClassLoader());
+                } catch (final Exception e) {
+                    LOGGER.error("Unable to initialize {} due to {}", type.getPluginClass().getName(), e.getClass()
+                            .getSimpleName(), e);
+                }
+            }
+        }
+        setup();
+        setupAdvertisement();
+        doConfigure();
+        setState(State.INITIALIZED);
+        LOGGER.debug("Configuration {} initialized", this);
+    }
+```
+
+AbstractConfiguration.doConfigure()
+
+```
+protected void doConfigure() {
+        preConfigure(rootNode);
+        configurationScheduler.start();
+        if (rootNode.hasChildren() && rootNode.getChildren().get(0).getName().equalsIgnoreCase("Properties")) {
+            final Node first = rootNode.getChildren().get(0);
+            createConfiguration(first, null);
+            if (first.getObject() != null) {
+                subst.setVariableResolver((StrLookup) first.getObject());
+            }
+        } else {
+            final Map<String, String> map = this.getComponent(CONTEXT_PROPERTIES);
+            final StrLookup lookup = map == null ? null : new MapLookup(map);
+            subst.setVariableResolver(new Interpolator(lookup, pluginPackages));
+        }
+
+        boolean setLoggers = false;
+        boolean setRoot = false;
+        for (final Node child : rootNode.getChildren()) {
+            if (child.getName().equalsIgnoreCase("Properties")) {
+                if (tempLookup == subst.getVariableResolver()) {
+                    LOGGER.error("Properties declaration must be the first element in the configuration");
+                }
+                continue;
+            }
+            createConfiguration(child, null);
+            if (child.getObject() == null) {
+                continue;
+            }
+            if (child.getName().equalsIgnoreCase("Scripts")) {
+                for (final AbstractScript script : child.getObject(AbstractScript[].class)) {
+                    if (script instanceof ScriptRef) {
+                        LOGGER.error("Script reference to {} not added. Scripts definition cannot contain script references",
+                                script.getName());
+                    } else {
+                        if (scriptManager != null) {
+                            scriptManager.addScript(script);
+                        }}
+                }
+            } else if (child.getName().equalsIgnoreCase("Appenders")) {
+                appenders = child.getObject();
+            } else if (child.isInstanceOf(Filter.class)) {
+                addFilter(child.getObject(Filter.class));
+            } else if (child.getName().equalsIgnoreCase("Loggers")) {
+                final Loggers l = child.getObject();
+                loggerConfigs = l.getMap();
+                setLoggers = true;
+                if (l.getRoot() != null) {
+                    root = l.getRoot();
+                    setRoot = true;
+                }
+            } else if (child.getName().equalsIgnoreCase("CustomLevels")) {
+                customLevels = child.getObject(CustomLevels.class).getCustomLevels();
+            } else if (child.isInstanceOf(CustomLevelConfig.class)) {
+                final List<CustomLevelConfig> copy = new ArrayList<>(customLevels);
+                copy.add(child.getObject(CustomLevelConfig.class));
+                customLevels = copy;
+            } else {
+                final List<String> expected = Arrays.asList("\"Appenders\"", "\"Loggers\"", "\"Properties\"",
+                        "\"Scripts\"", "\"CustomLevels\"");
+                LOGGER.error("Unknown object \"{}\" of type {} is ignored: try nesting it inside one of: {}.",
+                        child.getName(), child.getObject().getClass().getName(), expected);
+            }
+        }
+
+        if (!setLoggers) {
+            LOGGER.warn("No Loggers were configured, using default. Is the Loggers element missing?");
+            setToDefault();
+            return;
+        } else if (!setRoot) {
+            LOGGER.warn("No Root logger was configured, creating default ERROR-level Root logger with Console appender");
+            setToDefault();
+            // return; // LOG4J2-219: creating default root=ok, but don't exclude configured Loggers
+        }
+
+        for (final Map.Entry<String, LoggerConfig> entry : loggerConfigs.entrySet()) {
+            final LoggerConfig loggerConfig = entry.getValue();
+            for (final AppenderRef ref : loggerConfig.getAppenderRefs()) {
+                final Appender app = appenders.get(ref.getRef());
+                if (app != null) {
+                    loggerConfig.addAppender(app, ref.getLevel(), ref.getFilter());
+                } else {
+                    LOGGER.error("Unable to locate appender \"{}\" for logger config \"{}\"", ref.getRef(),
+                            loggerConfig);
+                }
+            }
+
+        }
+
+        setParents();
+    }
+```
+
+AbstractConfiguration.createConfiguration()
+
+```
+  @Override
+    public void createConfiguration(final Node node, final LogEvent event) {
+        final PluginType<?> type = node.getType();
+        if (type != null && type.isDeferChildren()) {
+            node.setObject(createPluginObject(type, node, event));
+        } else {
+            for (final Node child : node.getChildren()) {
+                createConfiguration(child, event);
+            }
+
+            if (type == null) {
+                if (node.getParent() != null) {
+                    LOGGER.error("Unable to locate plugin for {}", node.getName());
+                }
+            } else {
+                node.setObject(createPluginObject(type, node, event));
+            }
+        }
+    }
+```
+
 ## Pocs for Logger Tree ##
 
 **AsyncLogger.actualAsyncLog()**
