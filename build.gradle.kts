@@ -23,6 +23,9 @@ dependencies {
     // For Bundle Context POC
     implementation("org.osgi:org.osgi.framework:1.10.0")
 
+    // For AsyncLoggerContext POC
+    implementation("com.lmax:disruptor:4.0.0")
+
 
     // For Rolling Pocs
     testImplementation("org.mockito:mockito-core:5.11.0")
