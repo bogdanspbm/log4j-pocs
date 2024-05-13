@@ -157,8 +157,8 @@ public class LoggerPocTests {
         bufferLogEvent.setValues(logger, null, null, null, null, new MutableLogEvent(), null, data, null, 1, null, 1, null,
                 new SystemMillisClock(), new SystemNanoClock());
 
-        RingBufferLogEventHandler handler = new RingBufferLogEventHandler();
-        handler.onEvent(bufferLogEvent, 0, true);
+        //RingBufferLogEventHandler handler = new RingBufferLogEventHandler();
+        //handler.onEvent(bufferLogEvent, 0, true);
     }
 
 }

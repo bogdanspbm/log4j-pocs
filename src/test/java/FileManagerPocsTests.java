@@ -53,7 +53,7 @@ public class FileManagerPocsTests {
                 .setLayout(layout)
                 .withAppend(true)
                 .setName("RollingFile")
-                .withPolicy(CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "false", "0 * * * * ?"))
+                .withPolicy(CronTriggeringPolicy.createPolicy(new DefaultConfiguration(), "true", "0 * * * * ?"))
                 .withStrategy(DefaultRolloverStrategy.newBuilder()
                         .withMax(String.valueOf(3))
                         .withConfig(new DefaultConfiguration())
