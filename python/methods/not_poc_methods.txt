@@ -1,0 +1,9 @@
+"org.apache.logging.log4j.core.filter.AbstractFilterable.start"
+"org.apache.logging.log4j.core.config.builder.impl.DefaultConfigurationBuilder.build"
+"org.apache.logging.log4j.core.appender.rolling.action.AbstractAction.execute"
+"org.apache.logging.log4j.LogManager.getLogger"
+"org.apache.logging.log4j.spi.AbstractLoggerAdapter.getContext"
+"org.apache.logging.log4j.core.layout.PatternLayout$Builder.build"
+"org.apache.logging.log4j.core.appender.OutputStreamManager.getManager"
+"org.apache.logging.log4j.core.appender.AbstractManager.getManager"
+"org.apache.logging.log4j.core.AbstractLifeCycle.start
