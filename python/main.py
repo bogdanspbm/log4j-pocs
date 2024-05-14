@@ -103,7 +103,6 @@ def color_graph(dot_filename, poc_file, not_proven_file, abstract_file, output_d
     graph.write_svg(output_svg_filename)
 
 
-# Пример использования
 color_graph(
     dot_filename='graphs/graph_in.dot',
     poc_file='methods/poc_methods.txt',
