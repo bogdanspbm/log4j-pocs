@@ -96,6 +96,34 @@ def color_graph(dot_filename, poc_file, not_proven_file, abstract_file, output_d
         if node_name in nodes.keys():
             set_color(nodes[node_name], "#fff1b8")  # Желтый перекрашивает все
 
+    # Окрашивание узлов в желтый, если узел не закрашен и его имя содержит "abstract"
+    for node_name, node in nodes.items():
+        if "abstract" in node_name.lower() and node.get_attributes().get('fillcolor') is None:
+            set_color(node, "#fff1b8")
+
+
+    # Удаление красных узлов
+    for node_name in list(nodes.keys()):
+        node = nodes[node_name]
+        if node.get_attributes().get('fillcolor') == "#ffccc7":
+            graph.del_node(node)
+
+    # Обновить словарь узлов после удаления
+    nodes = {node.get_name().strip('"'): node for node in graph.get_nodes()}
+
+    # Окрашивание узлов в контрастный розовый, если их имя начинается на "java.lang."
+    for node_name, node in nodes.items():
+        if node_name.startswith("java.lang."):
+            set_color(node, "#ffd6e7") 
+            ancestors = find_ancestors(edges, node_name)
+            for anc in ancestors:
+                if anc in nodes.keys():
+                    set_color(nodes[anc], "#ffd6e7")
+
+    for node_name, node in nodes.items():
+        if node_name.startswith("java.lang."):
+            set_color(node, "#ff69b4")  # Контрастный розовый
+
     # Сохранение нового графа в формате .dot
     graph.write(output_dot_filename)
 
