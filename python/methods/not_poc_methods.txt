@@ -7,3 +7,4 @@
 "org.apache.logging.log4j.core.appender.OutputStreamManager.getManager"
 "org.apache.logging.log4j.core.appender.AbstractManager.getManager"
 "org.apache.logging.log4j.core.AbstractLifeCycle.start
+"org.apache.logging.log4j.core.util.Builder.build"

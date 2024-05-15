@@ -101,12 +101,22 @@ def color_graph(dot_filename, poc_file, not_proven_file, abstract_file, output_d
         if "abstract" in node_name.lower() and node.get_attributes().get('fillcolor') is None:
             set_color(node, "#fff1b8")
 
+    # Удаление красных узлов и связанных с ними рёбер
+    nodes_to_delete = [node_name for node_name, node in nodes.items() if
+                       node.get_attributes().get('fillcolor') == "#ffccc7"]
+    for node_name in nodes_to_delete:
+        graph.del_node(nodes[node_name])
 
-    # Удаление красных узлов
-    for node_name in list(nodes.keys()):
-        node = nodes[node_name]
-        if node.get_attributes().get('fillcolor') == "#ffccc7":
-            graph.del_node(node)
+    # Удаление рёбер, которые связаны с удаленными узлами
+    edges_to_delete = []
+    for edge in edges:
+        source = edge.get_source().strip('"')
+        destination = edge.get_destination().strip('"')
+        if source in nodes_to_delete or destination in nodes_to_delete:
+            edges_to_delete.append(edge)
+
+    for edge in edges_to_delete:
+        graph.del_edge(edge.get_source(), edge.get_destination())
 
     # Обновить словарь узлов после удаления
     nodes = {node.get_name().strip('"'): node for node in graph.get_nodes()}
@@ -114,7 +124,7 @@ def color_graph(dot_filename, poc_file, not_proven_file, abstract_file, output_d
     # Окрашивание узлов в контрастный розовый, если их имя начинается на "java.lang."
     for node_name, node in nodes.items():
         if node_name.startswith("java.lang."):
-            set_color(node, "#ffd6e7") 
+            set_color(node, "#ffd6e7")
             ancestors = find_ancestors(edges, node_name)
             for anc in ancestors:
                 if anc in nodes.keys():
