@@ -142,10 +142,10 @@ def color_graph(dot_filename, poc_file, not_proven_file, abstract_file, output_d
 
 
 color_graph(
-    dot_filename='graphs/graph_in.dot',
+    dot_filename='graphs/graph_in_old.dot',
     poc_file='methods/poc_methods.txt',
     not_proven_file='methods/not_poc_methods.txt',
     abstract_file='methods/abstract_methods.txt',
-    output_dot_filename='graphs/graph_out.dot',
-    output_svg_filename='svg/graph_out.svg'
+    output_dot_filename='graphs/graph_out_old.dot',
+    output_svg_filename='svg/graph_out_old.svg'
 )
